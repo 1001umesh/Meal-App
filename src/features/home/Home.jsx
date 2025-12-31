@@ -1,54 +1,81 @@
 import { Button } from "@/components/ui/button";
-import React from "react";
 import { useGetNewsQuery, useLazyGetNewsQuery } from "../news/newsApi";
 import { Spinner } from "@/components/ui/spinner";
+import {EditIcon } from "lucide-react";
+import DeleteNews from "../news/DeleteNews";
+import { useNavigate, useSearchParams } from "react-router";
+import { Input } from "@/components/ui/input";
+import { Formik } from "formik";
 
 const Home = () => {
-  /*--------using through useGetNewsQuery----------------------*/
-  const { error, data, isLoading, refetch,isFetching } = useGetNewsQuery();
+
+  const nav = useNavigate();
+  const [searchParams,setSearchParams]=useSearchParams();
+    const { error, data, isLoading, isFetching } = useGetNewsQuery({
+    search:searchParams.get('search')?? ""
+  });
 
   if (isLoading) return <h1>Loading.......</h1>;
 
-  if (error) return <p className="text-red-600">{error.data}</p>
+  if (error) return <p className="text-red-600">{error.data}</p>;
 
-  return <div>
-    <div className="my-8 mx-9 grid grid-cols-2 gap-4 ">
-    {data.map((news)=>{
-      return<div key={news.id} className="border py-4 px-6 rounded-xl">
-        <p >Title :{news.title}</p>
-        <p>Detail: {news.detail}</p>
-        <p> Author: {news.author}</p>
+  return (
+    <div className="py-4 px-8">
+      <div className="flex justify-center">
+        <h1 className="text-3xl my-4 border py-2 px-4 rounded bg-amber-400 w-full text-center">
+          HOT TRENDING NEWS{" "}
+        </h1>
       </div>
-    })}
- 
-  </div>
 
-  <Button onClick={refetch}>
-    {isFetching && <Spinner/>}
-    Refetch</Button>
-  </div>;
+      <div className="flex justify-center">
+        <Formik
+        initialValues={{
+          search:'',
 
-  /*--------------------using through useLazyGetNewsQuery-------------------*/
-  // const [getData,{isLoading,error,data,isFetching}]=useLazyGetNewsQuery();
-  // if(isLoading || isFetching) return <h1>Loading</h1>;
-  // if(error) return <p className="text-red-700">{error}</p>
+        }}
+        onSubmit={(val)=>{
+          setSearchParams({search:val.search})
+      
+        }}
+        >
+          {({handleChange,values,handleSubmit,errors}) => (
 
-  // return <div className="py-5 px-4">
+            <form onSubmit={handleSubmit}>
+              <div className="flex w-full max-w-sm items-center gap-2 ">
+                <Input 
+                value={values.search}
+                onChange={handleChange}
+                name="search"
+                 type="text" placeholder="Search news" />
+                <Button type="submit" variant="outline">
+                  Search
+                </Button>
+              </div>
+            </form>
+          )}
+        </Formik>
+      </div>
 
-  //   {data && data.map((news)=>{
-  //     return <div key={news.id}>
-  //       <h1>{news.title}</h1>
-  //       <p> Detail: {news.detail}</p>
-  //       <p> Author {news.author}</p>
-  //     </div>
-  //   })}
-  //   <Button onClick={()=>getData()}>Get Data</Button>
-
-  // </div>
-
-
-}
-
-
+      {data.map((news) => {
+        return (
+          <div key={news.id} className="bg-gray-200 px-4 py-2 rounded my-4 ">
+            <p className="text-xl font-semibold my-2">{news.title}</p>
+            <p className="text-md text-justify">{news.detail}</p>
+            <p className="text-gray-600">By: {news.author}</p>
+            <div className="my-4">
+              <Button
+                onClick={() => nav(`/edit-page/${news.id}`)}
+                variant="ghost"
+              >
+                <EditIcon />
+              </Button>
+              <DeleteNews id={news.id} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 export default Home;
